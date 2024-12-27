@@ -1,26 +1,54 @@
 #include <iostream>
 #include "matrix.h"
+#include <vector>
 
 int main() {
-    Matrix m1(2, 3);
-    m1.set(0, 0, 1);
-    m1.set(0, 1, 2);
-    m1.set(0, 2, 3);
-    m1.set(1, 0, 4);
-    m1.set(1, 1, 5);
-    m1.set(1, 2, 16);
+    unsigned int _inputDimension = 1;
+    unsigned int _outputDimension = 1;
+    unsigned int _hiddenDimension = 2;
+    unsigned int _numInputs  = 4;
 
-    Matrix m2(3, 2);
-    m2.set(0, 0, 1);
-    m2.set(0, 1, 2);
-    m2.set(1, 0, 3);
-    m2.set(1, 1, 4);
-    m2.set(2, 0, 5);
-    m2.set(2, 1, 6);
+    std::vector<Matrix> _input;
+    _input.push_back(Matrix(_inputDimension, 1, new double[] { 3 }));
+    _input.push_back(Matrix(_inputDimension, 1, new double[] { 4 })); 
+    _input.push_back(Matrix(_inputDimension, 1, new double[] { 5 }));
+    _input.push_back(Matrix(_inputDimension, 1, new double[] { 6 })); 
 
-    m1.print( std::cout, 0 );
-    m2.print( std::cout, 0 );
-    Matrix m3 = m1 * m2;
-    m3.print( std::cout, 0 );
+    Matrix _hiddenState(_hiddenDimension, 1, new double[] { 0, 0 });
+
+    std::vector<Matrix> _output;
+
+    Matrix _weightsX(_hiddenDimension, _inputDimension, new double[] { 1, 2 });
+    Matrix _weightsH(_hiddenDimension, _hiddenDimension, new double[] { 1, -1, 1, 1 });
+    Matrix _weightsY(_outputDimension, _hiddenDimension, new double[] { -1, 1 });
+
+    Matrix _weightsXH = _weightsX.append_columnwise( _weightsH );
+
+    std::cout << "Inputs:" << std::endl;
+    for (unsigned int _i = 0; _i < _input.size(); _i++) {
+        _input[_i].print(std::cout);
+    }
+    std::cout << "WeightsXH:" << std::endl;
+    _weightsXH.print(std::cout);
+    std::cout << "WeightsY:" << std::endl;
+    _weightsY.print(std::cout);
+
+    for (unsigned int _i = 0; _i < _numInputs; _i++) {
+        std::cout << "Input to step " << _i << ":" << std::endl;
+        Matrix _XH = _input[_i].append_rowwise( _hiddenState );
+        _XH.print(std::cout);
+ 
+        _hiddenState = Matrix::ReLU( _weightsXH * _XH );
+        std::cout << "New hidden state:" << std::endl;
+        _hiddenState.print(std::cout);
+
+        _output.push_back( _weightsY * _hiddenState );
+    }
+
+    std::cout << "Output:" << std::endl;
+    for (unsigned int _i = 0; _i < _output.size(); _i++) {
+        _output[_i].print(std::cout);
+    }
+
     return 0;
 }

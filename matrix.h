@@ -1,8 +1,9 @@
 #pragma once
-#include <stdexcept>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
-#include <cmath>
+#include <stdexcept>
+#include <vector>
 
 class Matrix {
     private:
@@ -14,7 +15,7 @@ class Matrix {
         double get_element_width( int precision ) const;
 
     public:
-        Matrix(unsigned int rows, unsigned int cols);
+        Matrix(unsigned int rows, unsigned int cols, double* data = nullptr);
         Matrix(const Matrix& other);
         ~Matrix();
 
@@ -23,14 +24,20 @@ class Matrix {
 
         double get( unsigned int row, unsigned int col ) const; 
         void set( unsigned int row, unsigned int col, double value ); 
+        void set_row( unsigned int row, const std::vector<double>& values );
+        void set_col( unsigned int col, const std::vector<double>& values );
+
         Matrix dot_product( const Matrix& other ); 
-        Matrix append( const Matrix& other );
+        Matrix append_rowwise( const Matrix& other );
+        Matrix append_columnwise( const Matrix& other );
 
         Matrix operator *( const Matrix& other ) {
             return dot_product( other );
         }   
+        Matrix operator =( const Matrix& other );
+        static Matrix ReLU( const Matrix& input );
 
-        void print( std::ostream& os, int precision = 2 ) const;
+        void print( std::ostream& os, int precision = 0 ) const;
 };
 
     
