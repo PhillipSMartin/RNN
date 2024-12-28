@@ -1,5 +1,8 @@
 #include "matrix.h"
+#include <cmath>
+#include <iomanip>
 #include <iterator>
+#include <stdexcept>
 
 double Matrix::get_max_element() const {
     double _max_element = data_[0];
@@ -15,28 +18,19 @@ double Matrix::get_element_width( int precision ) const {
     return precision + 2 + std::floor( std::log10( get_max_element() ) );
 }
 
-Matrix::Matrix(unsigned int rows, unsigned int cols, double* data) {
-    if (rows == 0 || cols == 0) {
-        throw std::invalid_argument("Invalid matrix dimensions");
+Matrix::Matrix(unsigned int rows, unsigned int cols, const std::vector<double>& data) :
+        rows_(rows), cols_(cols) {
+    if (rows_ == 0 || cols_ == 0) {
+        data_ = nullptr;
     }
-    rows_ = rows;
-    cols_ = cols;
-    data_ = new double[rows_ * cols_];
-
-    if (data != nullptr) {
-        for (unsigned int _i = 0; _i < rows_ * cols_; _i++) {
-            data_[_i] = data[_i];
-        }
+    else {
+        data_ = new double[rows_ * cols_];
+        set_all(data);
     }
 }
 
 Matrix::Matrix(const Matrix& other) {
-    rows_ = other.rows_;
-    cols_ = other.cols_;
-    data_ = new double[rows_ * cols_];
-    for (unsigned int _i = 0; _i < rows_ * cols_; _i++) {
-        data_[_i] = other.data_[_i];
-    }
+    *this = other;
 }
 
 Matrix::~Matrix() {
@@ -81,7 +75,20 @@ void Matrix::set_col( unsigned int col, const std::vector<double>& values ) {
     }
 }
 
-Matrix Matrix::dot_product( const Matrix& other ) {
+void Matrix::set_all( const std::vector<double>& values ) {
+    if ((values.size() != rows_ * cols_) && (values.size() != 0)) {
+        throw std::invalid_argument("Invalid size of data");
+    }
+
+    if (values.size() > 0) {
+        std::copy(values.begin(), values.end(), data_);
+    }
+    else {
+        std::fill(data_, data_ + rows_ * cols_, 0.0);
+    }
+}
+
+Matrix Matrix::dot_product( const Matrix& other ) const {
     if (cols_ != other.rows_) {
         throw std::invalid_argument("Matrices must have compatible dimensions");
     }
@@ -98,7 +105,7 @@ Matrix Matrix::dot_product( const Matrix& other ) {
     return _result;
 }
 
-Matrix Matrix::append_columnwise( const Matrix& other ) {
+Matrix Matrix::append_columnwise( const Matrix& other ) const {
     if (rows_ != other.rows_) {
         throw std::invalid_argument("Matrices must have compatible dimensions");
     }
@@ -114,7 +121,7 @@ Matrix Matrix::append_columnwise( const Matrix& other ) {
     return _result;
 }
 
-Matrix Matrix::append_rowwise( const Matrix& other ) {
+Matrix Matrix::append_rowwise( const Matrix& other ) const {
     if (cols_ != other.cols_) {
         throw std::invalid_argument("Matrices must have compatible dimensions");
     }
@@ -132,14 +139,18 @@ Matrix Matrix::append_rowwise( const Matrix& other ) {
     return _result;
 }
 
-Matrix Matrix::operator =( const Matrix& other ) {
-    if (rows_ != other.rows_ || cols_ != other.cols_) {
-        throw std::invalid_argument("Matrices must have the same dimension");
+void Matrix::operator =( const Matrix& other ) {
+    rows_ = other.rows_;
+    cols_ = other.cols_;
+    
+    delete[] data_;
+    if (rows_ == 0 || cols_ == 0) {
+        data_ = nullptr;
     }
-    for (unsigned int _i = 0; _i < rows_ * cols_; _i++) {
-        data_[_i] = other.data_[_i];
+    else {    
+        data_ = new double[rows_ * cols_];
+        set_all(std::vector<double>(other.data_, other.data_ + rows_ * cols_));
     }
-    return *this;
 }
 
 Matrix Matrix::ReLU( const Matrix& input ) {
